@@ -1,0 +1,13 @@
+services:
+  rnsd:
+    image: ghcr.io/tealblu/rns-docker:latest
+    container_name: rnsd
+    restart: unless-stopped
+    network_mode: host        # needed for AutoInterface (LAN discovery)
+    volumes:
+      - ./config:/config
+    # RNode / serial radios:
+    # devices:
+    #   - /dev/ttyACM0:/dev/ttyACM0
+    # group_add:
+    #   - dialout
