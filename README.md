@@ -63,8 +63,6 @@ Pass the device through to the container:
       - /dev/ttyACM0:/dev/ttyACM0
 ```
 
-Images are built for `linux/amd64` and `linux/arm64`, and rebuilt weekly to pick up new RNS releases as well as whenever the base image is updated.
-
 ## Health check
 
 The container reports healthy once `rnstatus` can reach the running instance. Check it with `docker ps`, or run it yourself:
@@ -81,7 +79,7 @@ cd rns-docker
 docker build -t rns-docker .
 ```
 
-To pin versions, pass `--build-arg RNS_VERSION=1.5.7` (and `LXMF_VERSION` if you want).
+To pin versions, pass `--build-arg RNS_VERSION=1.5.7` (and `LXMF_VERSION` if you want). Images are built for `linux/amd64` and `linux/arm64`, and rebuilt weekly to pick up new RNS releases as well as whenever the base image is updated.
 
 ## License
 
