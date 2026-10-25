@@ -15,14 +15,12 @@ LABEL org.opencontainers.image.source="https://github.com/tealblu/rns-docker" \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends tini \
  && rm -rf /var/lib/apt/lists/* \
- && useradd -u 1000 -m rns \
- && mkdir /config && chown rns:rns /config
+ && mkdir /config
 
 COPY --from=build /opt/venv /opt/venv
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1
-USER rns
 VOLUME /config
 EXPOSE 4242/tcp
 
