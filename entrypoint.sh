@@ -1,9 +1,12 @@
 #!/bin/sh
 set -e
 
-if [ ! -f /config/config ]; then
-  echo "No config found, writing default to /config/config"
-  cat > /config/config <<EOF
+CONFIG_DIR="$HOME/.reticulum"
+mkdir -p "$CONFIG_DIR"
+
+if [ ! -f "$CONFIG_DIR/config" ]; then
+  echo "No config found, writing default to $CONFIG_DIR/config"
+  cat > "$CONFIG_DIR/config" <<EOF
 [reticulum]
   enable_transport = ${RNS_ENABLE_TRANSPORT:-True}
   share_instance = Yes

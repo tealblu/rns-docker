@@ -3,11 +3,11 @@ services:
     image: ghcr.io/tealblu/rns-docker:latest
     container_name: rnsd
     restart: unless-stopped
-    network_mode: host        # needed for AutoInterface (LAN discovery)
+    network_mode: host          # required for AutoInterface (LAN peer discovery)
     volumes:
-      - ./config:/config
-    # RNode / serial radios:
+      - ./reticulum:/root/.reticulum   # config, storage, and transport identity live here
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Serial / RNode radios:
     # devices:
     #   - /dev/ttyACM0:/dev/ttyACM0
-    # group_add:
-    #   - dialout
