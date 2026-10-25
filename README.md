@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/tealblu/rns-docker/actions/workflows/publish.yml/badge.svg)](https://github.com/tealblu/rns-docker/actions/workflows/publish.yml)
 [![GHCR](https://img.shields.io/badge/ghcr.io-tealblu%2Frns--docker-pink?logo=github)](https://github.com/tealblu/rns-docker/pkgs/container/rns-docker)
-[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm64-lightgrey)](#tags)
+[![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm64-pink)](#tags)
 [![License](https://img.shields.io/github/license/tealblu/rns-docker)](LICENSE)
 
 Docker image for running a [Reticulum](https://reticulum.network) transport node (`rnsd`).
