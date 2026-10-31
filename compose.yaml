@@ -6,8 +6,6 @@ services:
     network_mode: host          # required for AutoInterface (LAN peer discovery)
     volumes:
       - ./reticulum:/root/.reticulum   # config, storage, and transport identity live here
-    environment:
-      - PYTHONUNBUFFERED=1
     # Serial / RNode radios:
     # devices:
     #   - /dev/ttyACM0:/dev/ttyACM0

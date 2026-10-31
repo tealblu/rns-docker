@@ -19,7 +19,7 @@ RUN apt-get update \
 COPY --from=build /opt/venv /opt/venv
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
-ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1
+ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONOPTIMIZE=1
 VOLUME /root/.reticulum
 EXPOSE 4242/tcp
 
