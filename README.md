@@ -36,7 +36,7 @@ The default config enables transport, an `AutoInterface`, and a TCP server. The 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `RNS_ENABLE_TRANSPORT` | `True` | Sets `enable_transport` |
-| `RNS_LOGLEVEL` | `4` | Sets `loglevel` (0 to 7) |
+| `RNS_LOGLEVEL` | `2` | Sets `loglevel` (0 to 7) |
 | `RNS_TCP_PORT` | `4242` | Port for the TCP server interface |
 
 See the [Reticulum manual](https://reticulum.network/manual/interfaces.html) for the full list of interface options.
