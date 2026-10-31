@@ -1,0 +1,6 @@
+.git
+.github
+.env
+reticulum
+*.md
+compose*.yaml

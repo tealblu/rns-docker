@@ -17,10 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - id: ver
+      - id: upstream
         run: |
-          v=$(curl -fsS https://pypi.org/pypi/rns/json | jq -er .info.version)
-          echo "rns=$v" >> "$GITHUB_OUTPUT"
+          ref=$(git ls-remote --tags --refs https://github.com/Quad4-Software/Reticulum-Go.git \
+            | awk '{print $2}' | sed 's#refs/tags/##' | sort -V | tail -n1)
+          test -n "$ref"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -35,9 +37,9 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          build-args: RNS_VERSION=${{ steps.ver.outputs.rns }}
+          build-args: RETICULUM_GO_REF=${{ steps.upstream.outputs.ref }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.ver.outputs.rns }}
+            ghcr.io/${{ github.repository }}:${{ steps.upstream.outputs.ref }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

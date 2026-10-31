@@ -5,7 +5,12 @@
 [![Platforms](https://img.shields.io/badge/platforms-amd64%20%7C%20arm64-pink)](#tags)
 [![License](https://img.shields.io/github/license/tealblu/rns-docker?color=pink)](LICENSE)
 
-Docker image for running a [Reticulum](https://reticulum.network) transport node (`rnsd`).
+Docker image for running a [Reticulum](https://reticulum.network) transport node using
+[Reticulum-Go](https://github.com/Quad4-Software/Reticulum-Go).
+
+> **Experimental upstream:** Reticulum-Go is wire-compatible with Python RNS, but
+> upstream still considers it experimental and it may lag the reference
+> implementation. Test interop before relying on it for production transport.
 
 ## Quick start
 
@@ -25,25 +30,37 @@ docker compose up -d
 docker logs rnsd
 ```
 
-On first start a default config is written to `./reticulum/config`. Edit it and restart the container to apply changes. Or mount your own reticulum folder in [the same format that rnsd expects](https://reticulum.network/manual/using.html).
+On first start a default config is written to `./reticulum/config`. Edit it and
+restart the container to apply changes. Or mount your own reticulum folder in
+[the same format that rnsd expects](https://reticulum.network/manual/using.html).
+Reticulum-Go reads the same INI shape as Python RNS.
 
 ## Configuration
 
-Everything Reticulum stores lives in the mounted directory: `config`, `storage/` (including your transport identity), and any custom interfaces.
+Everything Reticulum stores lives in the mounted directory: `config`, `storage/`
+(including your transport identity), and any custom interfaces.
 
-The default config enables transport, an `AutoInterface`, and a TCP server. The following variables change what gets generated, and only apply when no config file exists yet:
+The default config enables transport, an `AutoInterface`, and a TCP server. The
+following variables change what gets generated, and only apply when no config
+file exists yet:
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `RNS_ENABLE_TRANSPORT` | `True` | Sets `enable_transport` |
-| `RNS_LOGLEVEL` | `2` | Sets `loglevel` (0 to 7) |
+| `RNS_LOGLEVEL` | `4` | Sets `loglevel` (0 to 7) |
 | `RNS_TCP_PORT` | `4242` | Port for the TCP server interface |
 
-See the [Reticulum manual](https://reticulum.network/manual/interfaces.html) for the full list of interface options.
+Copy `.env.example` to `.env` to set these for Compose.
+
+Reticulum-Go defaults to `~/.reticulum-go`, but the image passes
+`--config /root/.reticulum` explicitly so the volume layout stays the same as
+previous versions of this image.
 
 ## Networking
 
-`AutoInterface` finds peers on your LAN using link-local multicast, which doesn't work through Docker's bridge network, so `network_mode: host` must be used if you want to use `AutoInterface` functionality.
+`AutoInterface` finds peers on your LAN using link-local multicast, which doesn't
+work through Docker's bridge network, so `network_mode: host` must be used if you
+want to use `AutoInterface` functionality.
 
 If you only need TCP, you can use bridge mode instead:
 
@@ -52,7 +69,8 @@ If you only need TCP, you can use bridge mode instead:
       - "4242:4242"
 ```
 
-Remove the `AutoInterface` block from your config in that case, otherwise it logs a warning about not being able to autoconfigure.
+Remove the `AutoInterface` block from your config in that case, otherwise it logs
+a warning about not being able to autoconfigure.
 
 ## Serial and RNode devices
 
@@ -65,10 +83,13 @@ Pass the device through to the container:
 
 ## Health check
 
-The container reports healthy once `rnstatus` can reach the running instance. Check it with `docker ps`, or run it yourself:
+The container reports healthy once the Reticulum-Go status command can reach the
+running instance. Check it with `docker ps`, or run it yourself:
 
 ```sh
-docker exec rnsd rnstatus
+docker exec rnsd reticulum-go status -config /root/.reticulum
+# or the installed legacy name
+docker exec rnsd rgostatus -config /root/.reticulum
 ```
 
 ## Building
@@ -79,10 +100,39 @@ cd rns-docker
 docker build -t rns-docker .
 ```
 
-To pin versions, pass `--build-arg RNS_VERSION=1.5.7` (and `LXMF_VERSION` if you want). Images are built for `linux/amd64` and `linux/arm64`, and rebuilt weekly to pick up new RNS releases as well as whenever the base image is updated.
+The image is built from Reticulum-Go source and cross-compiled for the target
+platform. Pin the upstream revision with `RETICULUM_GO_REF` (commit, tag, or
+branch; default `v1.4.1`):
+
+```sh
+docker build --build-arg RETICULUM_GO_REF=v1.4.1 -t rns-docker .
+```
+
+Images are built for `linux/amd64` and `linux/arm64`. The publish workflow
+rebuilds weekly from the latest upstream release tag.
+
+## Reticulum-Go notes
+
+- The binary is a single multi-tool. Tools are subcommands, for example
+  `reticulum-go status`, `reticulum-go id`, and `reticulum-go path`.
+- Landlock/seccomp sandboxing is enabled by default. Under Docker's default
+  seccomp profile the daemon logs `Unshare(CLONE_NEWNS) failed` and soft-fails;
+  it continues to run. Add `enable_sandbox = no` under `[reticulum]` in
+  `./reticulum/config` to silence the message, at the cost of that extra layer.
+- Upstream project and documentation:
+  <https://github.com/Quad4-Software/Reticulum-Go>.
+
+## Tags
+
+| Tag | Meaning |
+| --- | --- |
+| `latest` | Latest build from the most recent upstream Reticulum-Go release |
+| `vX.Y.Z` | Build from that upstream Reticulum-Go release tag |
 
 ## License
 
 The files in this repository are available under the [MIT License](LICENSE).
 
-Reticulum itself is distributed under its own [license](https://github.com/markqvist/Reticulum/blob/master/LICENSE). Read it before redistributing images built from this repo.
+Reticulum-Go and Reticulum itself are distributed under their own licenses. Read
+them before redistributing images built from this repo:
+[Reticulum-Go license](https://github.com/Quad4-Software/Reticulum-Go/blob/master/LICENSE).

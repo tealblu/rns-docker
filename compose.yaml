@@ -1,11 +1,23 @@
 services:
   rnsd:
+    build:
+      context: .
+      args:
+        RETICULUM_GO_REF: ${RETICULUM_GO_REF:-v1.4.1}
     image: ghcr.io/tealblu/rns-docker:latest
     container_name: rnsd
     restart: unless-stopped
     network_mode: host          # required for AutoInterface (LAN peer discovery)
     volumes:
       - ./reticulum:/root/.reticulum   # config, storage, and transport identity live here
+    environment:
+      # Used by entrypoint.sh only when no config exists yet
+      - RNS_ENABLE_TRANSPORT=${RNS_ENABLE_TRANSPORT:-True}
+      - RNS_LOGLEVEL=${RNS_LOGLEVEL:-4}
+      - RNS_TCP_PORT=${RNS_TCP_PORT:-4242}
     # Serial / RNode radios:
     # devices:
     #   - /dev/ttyACM0:/dev/ttyACM0
+    # For bridge networking instead of host mode, remove network_mode and use:
+    # ports:
+    #   - "4242:4242"

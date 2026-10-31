@@ -1,0 +1,5 @@
+# Local environment overrides (copy from .env.example)
+.env
+
+# Reticulum runtime data if the directory is initialized locally
+reticulum/

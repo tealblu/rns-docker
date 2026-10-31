@@ -13,7 +13,7 @@ if [ ! -f "$CONFIG_DIR/config" ]; then
   panic_on_interface_error = No
 
 [logging]
-  loglevel = ${RNS_LOGLEVEL:-2}
+  loglevel = ${RNS_LOGLEVEL:-4}
 
 [interfaces]
   [[Default Interface]]
