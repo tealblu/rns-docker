@@ -41,6 +41,8 @@ The default config enables transport, an `AutoInterface`, and a TCP server. The 
 
 See the [Reticulum manual](https://reticulum.network/manual/interfaces.html) for the full list of interface options.
 
+With the default `loglevel = 2`, rnsd only logs warnings and errors. Set `RNS_LOGLEVEL=3` for startup and notice messages, or `4` for informational output.
+
 ## Networking
 
 `AutoInterface` finds peers on your LAN using link-local multicast, which doesn't work through Docker's bridge network, so `network_mode: host` must be used if you want to use `AutoInterface` functionality.
@@ -54,6 +56,17 @@ If you only need TCP, you can use bridge mode instead:
 
 Remove the `AutoInterface` block from your config in that case, otherwise it logs a warning about not being able to autoconfigure.
 
+With host networking, `AutoInterface` also sees Docker bridges, VPNs, and other virtual interfaces. To limit discovery to your actual LAN NIC, add its name to the interface block in `./reticulum/config`:
+
+```ini
+[[Default Interface]]
+  type = AutoInterface
+  enabled = yes
+  devices = eth0
+```
+
+Use `ignored_devices = docker0, br0, veth0` to exclude interfaces instead. List available names with `ip -brief link`.
+
 ## Serial and RNode devices
 
 Pass the device through to the container:
@@ -65,11 +78,18 @@ Pass the device through to the container:
 
 ## Health check
 
-The container reports healthy once `rnstatus` can reach the running instance. Check it with `docker ps`, or run it yourself:
+The container reports healthy once `rnstatus` can reach the running instance. The check runs every 5 minutes. Check it with `docker ps`, or run it yourself:
 
 ```sh
 docker exec rnsd rnstatus
 ```
+
+## Reducing resource usage
+
+- Set `enable_transport = No` if this node only needs to be an endpoint. Transport nodes verify and forward announces and answer path requests for the network.
+- Remove interfaces you do not use. Each enabled interface runs its own threads and discovery timers.
+- Keep `loglevel` at `2` or lower. The image no longer passes `-v` to `rnsd`, so the config value is used as-is.
+- `rnstatus -z` shows live profiling data and `rnstatus -A` shows announce statistics, which helps identify CPU-heavy interfaces.
 
 ## Building
 

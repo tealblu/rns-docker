@@ -19,6 +19,9 @@ if [ ! -f "$CONFIG_DIR/config" ]; then
   [[Default Interface]]
     type = AutoInterface
     enabled = yes
+    # Optional: restrict discovery to specific interfaces (e.g. eth0, wlan0)
+    # devices = eth0
+    # ignored_devices = docker0, br0, veth0
 
   [[TCP Server Interface]]
     type = TCPServerInterface

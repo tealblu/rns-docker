@@ -1,11 +1,13 @@
 FROM python:3.12-slim AS build
 ARG RNS_VERSION
 ARG LXMF_VERSION
+ENV PYTHONOPTIMIZE=1
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir \
+RUN pip install --no-cache-dir --no-compile \
     "rns${RNS_VERSION:+==$RNS_VERSION}" \
     "lxmf${LXMF_VERSION:+==$LXMF_VERSION}"
+RUN python -m compileall -q -f -o 1 /opt/venv
 
 FROM python:3.12-slim
 LABEL org.opencontainers.image.source="https://github.com/tealblu/rns-docker" \
@@ -23,8 +25,8 @@ ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONOPTIMIZE=1
 VOLUME /root/.reticulum
 EXPOSE 4242/tcp
 
-HEALTHCHECK --interval=60s --timeout=15s --start-period=20s \
+HEALTHCHECK --interval=5m --timeout=15s --start-period=20s \
   CMD rnstatus >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
-CMD ["rnsd", "-v"]
+CMD ["rnsd"]
