@@ -6,6 +6,12 @@ services:
     network_mode: host          # required for AutoInterface (LAN peer discovery)
     volumes:
       - ./reticulum:/root/.reticulum   # config, storage, and transport identity live here
+    # Optional: pin AutoInterface discovery to one NIC and skip bridges/VPNs.
+    # These only affect the auto-generated config; a hand-edited config is
+    # left alone. See "Configuration" in README.md.
+    # environment:
+    #   RNS_AUTO_DEVICES: eth0
+    #   # RNS_AUTO_IGNORED_DEVICES: docker0,br0,veth0
     # Serial / RNode radios:
     # devices:
     #   - /dev/ttyACM0:/dev/ttyACM0

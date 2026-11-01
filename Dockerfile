@@ -6,7 +6,10 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --no-compile \
     "rns${RNS_VERSION:+==$RNS_VERSION}" \
-    "lxmf${LXMF_VERSION:+==$LXMF_VERSION}"
+    "lxmf${LXMF_VERSION:+==$LXMF_VERSION}" \
+    "cryptography>=3.4.7"
+# cryptography enables Reticulum's OpenSSL-backed Ed25519/X25519. Without it,
+# RNS silently falls back to pure Python, which is much slower per packet.
 RUN python -m compileall -q -f -o 1 /opt/venv
 
 FROM python:3.12-slim

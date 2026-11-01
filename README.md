@@ -25,19 +25,25 @@ docker compose up -d
 docker logs rnsd
 ```
 
-On first start a default config is written to `./reticulum/config`. Edit it and restart the container to apply changes. Or mount your own reticulum folder in [the same format that rnsd expects](https://reticulum.network/manual/using.html).
+On first start a default config is written to `./reticulum/config`. Until you edit it, it is treated as auto-generated and rewritten from the environment variables below on every start, so changes to those variables apply without deleting the volume. As soon as the file differs from what the image generated, it is treated as your config and is never overwritten. Delete `./reticulum/config` and `./reticulum/.config.generated` to return to auto-generation.
+
+You can also mount your own reticulum folder in [the same format that rnsd expects](https://reticulum.network/manual/using.html). If you omit the volume entirely, nothing persists and the container starts from a freshly generated config every time, which is handy for demoing env-var changes.
 
 ## Configuration
 
-Everything Reticulum stores lives in the mounted directory: `config`, `storage/` (including your transport identity), and any custom interfaces.
+Everything Reticulum stores lives in the mounted directory: `config`, `storage/` (including your transport identity), any custom interfaces, and the `.config.generated` snapshot used to detect local edits.
 
-The default config enables transport, an `AutoInterface`, and a TCP server. The following variables change what gets generated, and only apply when no config file exists yet:
+The default config enables transport, an `AutoInterface`, and a TCP server. The following variables change what gets generated. They apply to the auto-generated config on every restart, and are ignored once you have edited the config:
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `RNS_ENABLE_TRANSPORT` | `True` | Sets `enable_transport` |
 | `RNS_LOGLEVEL` | `2` | Sets `loglevel` (0 to 7) |
 | `RNS_TCP_PORT` | `4242` | Port for the TCP server interface |
+| `RNS_TCP_ENABLED` | `yes` | Enable or disable the TCP server interface |
+| `RNS_AUTO_INTERFACE` | `yes` | Enable or disable the `AutoInterface` |
+| `RNS_AUTO_DEVICES` | none | Comma-separated interfaces to use for discovery, e.g. `eth0` |
+| `RNS_AUTO_IGNORED_DEVICES` | none | Comma-separated interfaces to exclude, e.g. `docker0,br0` |
 
 See the [Reticulum manual](https://reticulum.network/manual/interfaces.html) for the full list of interface options.
 
@@ -56,7 +62,7 @@ If you only need TCP, you can use bridge mode instead:
 
 Remove the `AutoInterface` block from your config in that case, otherwise it logs a warning about not being able to autoconfigure.
 
-With host networking, `AutoInterface` also sees Docker bridges, VPNs, and other virtual interfaces. To limit discovery to your actual LAN NIC, add its name to the interface block in `./reticulum/config`:
+With host networking, `AutoInterface` also sees Docker bridges, VPNs, and other virtual interfaces. Each interface it adopts gets its own listener threads and discovery timers, so limiting discovery reduces both CPU and thread count. Add its name to the interface block in `./reticulum/config`:
 
 ```ini
 [[Default Interface]]
@@ -65,7 +71,9 @@ With host networking, `AutoInterface` also sees Docker bridges, VPNs, and other 
   devices = eth0
 ```
 
-Use `ignored_devices = docker0, br0, veth0` to exclude interfaces instead. List available names with `ip -brief link`.
+Use `ignored_devices = docker0, br0, veth0` to exclude interfaces instead. List available names with `ip -brief link`. If you leave the config auto-generated, set `RNS_AUTO_DEVICES=eth0` or `RNS_AUTO_IGNORED_DEVICES=docker0,br0,veth0` and restart the container instead.
+
+`AutoInterface` only adopts interfaces that have an IPv6 link-local address, so most plain Docker bridges are skipped automatically. Bridges with IPv6 enabled, Tailscale, and similar interfaces are not.
 
 ## Serial and RNode devices
 
@@ -86,10 +94,14 @@ docker exec rnsd rnstatus
 
 ## Reducing resource usage
 
-- Set `enable_transport = No` if this node only needs to be an endpoint. Transport nodes verify and forward announces and answer path requests for the network.
-- Remove interfaces you do not use. Each enabled interface runs its own threads and discovery timers.
+At idle this image uses roughly 0.1% CPU and 25 MB RAM. CPU usage tracks the amount of announce, path, and link traffic the node handles and the number of interfaces it runs, so the largest savings come from doing less network work rather than from image tuning.
+
+- Set `enable_transport = No` if this node only needs to be an endpoint. Transport nodes verify and forward announces and answer path requests for the network. This is the single biggest lever on a busy network.
+- Remove interfaces you do not use. Each enabled interface runs its own threads and discovery timers. Prefer `devices = eth0` over relying on `AutoInterface` to find every bridge and VPN interface (see [Networking](#networking)).
 - Keep `loglevel` at `2` or lower. The image no longer passes `-v` to `rnsd`, so the config value is used as-is.
+- Leave interface access codes (IFAC) off unless you need them. Every packet on an IFAC interface pays an extra per-byte check in Python.
 - `rnstatus -z` shows live profiling data and `rnstatus -A` shows announce statistics, which helps identify CPU-heavy interfaces.
+- The image installs `cryptography`, so signature checks use the OpenSSL backend. Without it, Reticulum falls back to pure Python, which is roughly 50× slower per signature.
 
 ## Building
 
