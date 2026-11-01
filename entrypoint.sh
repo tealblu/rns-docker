@@ -1,8 +1,11 @@
 #!/bin/sh
-set -e
+set -eu
+umask 077
 
-CONFIG_DIR="$HOME/.reticulum"
+CONFIG_DIR="${HOME:-/root}/.reticulum"
 mkdir -p "$CONFIG_DIR"
+# Best effort: read-only bind mounts may reject chmod.
+chmod 700 "$CONFIG_DIR" 2>/dev/null || true
 
 if [ ! -f "$CONFIG_DIR/config" ]; then
   echo "No config found, writing default to $CONFIG_DIR/config"
@@ -27,5 +30,7 @@ if [ ! -f "$CONFIG_DIR/config" ]; then
     listen_port = ${RNS_TCP_PORT:-4242}
 EOF
 fi
+
+chmod 600 "$CONFIG_DIR/config" 2>/dev/null || true
 
 exec "$@"

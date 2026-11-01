@@ -30,10 +30,16 @@ docker compose up -d
 docker logs rnsd
 ```
 
+If you are deploying from a checkout of this repository, run
+`docker compose up -d --build` to build the local image. The `latest` tag tracks
+the newest published build, so run `docker compose pull` before `up` if you want
+to refresh it.
+
 On first start a default config is written to `./reticulum/config`. Edit it and
 restart the container to apply changes. Or mount your own reticulum folder in
 [the same format that rnsd expects](https://reticulum.network/manual/using.html).
-Reticulum-Go reads the same INI shape as Python RNS.
+Reticulum-Go reads the same INI shape as Python RNS, but not every Python
+interface type is implemented; see [Reticulum-Go notes](#reticulum-go-notes).
 
 ## Configuration
 
@@ -52,8 +58,13 @@ file exists yet:
 
 Copy `.env.example` to `.env` to set these for Compose.
 
+The generated config is created with `0600` permissions and the config
+directory with `0700`. Because the container runs as root, files it creates in
+a bind mount are root-owned; use `sudo` to edit them, or use a named volume, or
+pre-create the directory and config file with ownership that lets you edit them.
+
 Reticulum-Go defaults to `~/.reticulum-go`, but the image passes
-`--config /root/.reticulum` explicitly so the volume layout stays the same as
+`--config "$HOME/.reticulum"` explicitly so the volume layout stays the same as
 previous versions of this image.
 
 ## Networking
@@ -69,8 +80,8 @@ If you only need TCP, you can use bridge mode instead:
       - "4242:4242"
 ```
 
-Remove the `AutoInterface` block from your config in that case, otherwise it logs
-a warning about not being able to autoconfigure.
+Remove the `AutoInterface` block from your config in that case, otherwise it
+logs an error (`no suitable interfaces found`) and continues running.
 
 ## Serial and RNode devices
 
@@ -83,13 +94,16 @@ Pass the device through to the container:
 
 ## Health check
 
-The container reports healthy once the Reticulum-Go status command can reach the
-running instance. Check it with `docker ps`, or run it yourself:
+The default config enables the shared-instance RPC, so the container reports
+healthy once the Reticulum-Go status command can reach the running instance. If
+you set `share_instance = No`, the health check falls back to verifying that
+the `reticulum-go` process is still alive. Check it with `docker ps`, or run it
+yourself:
 
 ```sh
-docker exec rnsd reticulum-go status -config /root/.reticulum
+docker exec rnsd sh -c 'reticulum-go status -config "$HOME/.reticulum"'
 # or the installed legacy name
-docker exec rnsd rgostatus -config /root/.reticulum
+docker exec rnsd sh -c 'rgostatus -config "$HOME/.reticulum"'
 ```
 
 ## Building
@@ -115,6 +129,9 @@ rebuilds weekly from the latest upstream release tag.
 
 - The binary is a single multi-tool. Tools are subcommands, for example
   `reticulum-go status`, `reticulum-go id`, and `reticulum-go path`.
+- Reticulum-Go does not implement Python RNS's `KISSInterface`,
+  `AX25KISSInterface`, or `WeaveInterface`. Existing configs using those
+  interface types need to be migrated or kept on Python RNS.
 - Landlock/seccomp sandboxing is enabled by default. Under Docker's default
   seccomp profile the daemon logs `Unshare(CLONE_NEWNS) failed` and soft-fails;
   it continues to run. Add `enable_sandbox = no` under `[reticulum]` in

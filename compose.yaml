@@ -9,7 +9,10 @@ services:
     restart: unless-stopped
     network_mode: host          # required for AutoInterface (LAN peer discovery)
     volumes:
-      - ./reticulum:/root/.reticulum   # config, storage, and transport identity live here
+      # config, storage, and transport identity live here. The container writes
+      # as root, so files it creates will be root-owned; use sudo to edit them,
+      # a named volume, or pre-create the directory/config with matching ownership.
+      - ./reticulum:/root/.reticulum
     environment:
       # Used by entrypoint.sh only when no config exists yet
       - RNS_ENABLE_TRANSPORT=${RNS_ENABLE_TRANSPORT:-True}
