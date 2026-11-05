@@ -92,17 +92,6 @@ The container reports healthy once `rnstatus` can reach the running instance. Th
 docker exec rnsd rnstatus
 ```
 
-## Reducing resource usage
-
-At idle this image uses roughly 0.1% CPU and 25 MB RAM. CPU usage tracks the amount of announce, path, and link traffic the node handles and the number of interfaces it runs, so the largest savings come from doing less network work rather than from image tuning.
-
-- Set `enable_transport = No` if this node only needs to be an endpoint. Transport nodes verify and forward announces and answer path requests for the network. This is the single biggest lever on a busy network.
-- Remove interfaces you do not use. Each enabled interface runs its own threads and discovery timers. Prefer `devices = eth0` over relying on `AutoInterface` to find every bridge and VPN interface (see [Networking](#networking)).
-- Keep `loglevel` at `2` or lower. The image no longer passes `-v` to `rnsd`, so the config value is used as-is.
-- Leave interface access codes (IFAC) off unless you need them. Every packet on an IFAC interface pays an extra per-byte check in Python.
-- `rnstatus -z` shows live profiling data and `rnstatus -A` shows announce statistics, which helps identify CPU-heavy interfaces.
-- The image installs `cryptography`, so signature checks use the OpenSSL backend. Without it, Reticulum falls back to pure Python, which is roughly 50× slower per signature.
-
 ## Building
 
 ```sh
