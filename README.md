@@ -84,14 +84,6 @@ Pass the device through to the container:
       - /dev/ttyACM0:/dev/ttyACM0
 ```
 
-## Health check
-
-The container reports healthy once `rnstatus` can reach the running instance. The check runs every 5 minutes. Check it with `docker ps`, or run it yourself:
-
-```sh
-docker exec rnsd rnstatus
-```
-
 ## Building
 
 ```sh
